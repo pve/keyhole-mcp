@@ -1,0 +1,17 @@
+{
+  "name": "keyhole-secrets-mcp",
+  "version": "0.1.0",
+  "description": "MCP server exposing an on-demand get_secret tool backed by a Unix socket bridge to a Mac Keychain/1Password agent.",
+  "type": "module",
+  "main": "index.js",
+  "bin": {
+    "keyhole-secrets-mcp": "./index.js"
+  },
+  "scripts": {
+    "start": "node index.js"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  }
+}
