@@ -47,10 +47,22 @@ def load_mapping(path: str) -> dict:
         return json.load(f)
 
 
+def _applescript_escape(s: str) -> str:
+    """Escape a string for safe interpolation into an AppleScript string
+    literal. `requester` comes straight from the container's JSON request
+    and is not otherwise validated — without this, a crafted requester
+    value containing a `"` could break out of the `display dialog` string
+    and inject arbitrary AppleScript (including `do shell script`) into the
+    osascript invocation below."""
+    return s.replace("\\", "\\\\").replace('"', '\\"')
+
+
 def ask_human(secret_name: str, requester: str) -> bool:
     """macOS dialog, default = Deny, timeout = auto-deny (fail closed)."""
+    safe_name = _applescript_escape(secret_name)
+    safe_requester = _applescript_escape(requester)
     prompt = (
-        f"Container ({requester}) is requesting secret \\\"{secret_name}\\\".\n"
+        f'Container ({safe_requester}) is requesting secret \\"{safe_name}\\".\n'
         f"Allow?"
     )
     script = (
