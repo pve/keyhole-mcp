@@ -1,3 +1,10 @@
 node_modules/
 *.log
 .DS_Store
+
+# Python
+__pycache__/
+*.pyc
+
+# secret-broker — real mapping, not the example
+secret-broker/host/mapping.json
