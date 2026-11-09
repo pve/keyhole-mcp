@@ -28,11 +28,11 @@ in the environment of the one MCP server process that needs them.
 
 ## Assumption on connectivity
 
-The Mac is usually connected to the VM, or can be when needed. The VM-side
-tool only needs a Unix socket that leads to the Mac agent. How that socket
-gets there (ssh `-R` today; Teleport or another tunnel later) is outside the
-MVP. SSH is blocked on some networks (ICTU, Eduroam HU; Teleport works there),
-so the socket path must stay transport-agnostic.
+MVP assumes a connection exists whenever a secret is needed: the human opens
+the session from the Mac and keeps the link up (ssh `-R` today). Without a
+connection the launch fails with a clear reason; no queueing, no unattended
+approval. Transport (Teleport, outbound HTTPS) is a later concern; the VM side
+only sees a Unix socket, so it can change without touching the wrapper.
 
 ## Users and stories
 
@@ -42,8 +42,8 @@ so the socket path must stay transport-agnostic.
 2. An MCP server whose secrets I denied shows as failed in `/mcp`. Claude sees
    the tools are missing and can adapt; the error says "denied" or "no Mac
    connection", not a generic crash.
-3. I restart a session while away from the Mac. The request times out as
-   denied; nothing is released.
+3. No connection at launch: the server fails with `no_connection`; nothing
+   is released.
 4. The agent runs `env` or reads files: it finds no secret values.
 
 ## Solution (MVP)
@@ -105,23 +105,22 @@ MVP; the wrapper replaces it.
   dialog, and `env` in the agent shows neither secret.
 - Deny and timeout both leave the session usable, with the affected servers
   failed and a readable reason.
-- After a disconnect, a restart without the Mac does not release anything.
+- Without a connection, a launch fails cleanly and releases nothing.
 
 ## Open questions
 
-1. Transport for the socket without ssh `-R`: Teleport port forwarding or a
-   small outbound HTTPS agent? Check how Teleport is deployed here first.
-2. Does herdr (`--remote`, saved machines) carry an ssh `RemoteForward`? Test
+1. Does herdr (`--remote`, saved machines) carry an ssh `RemoteForward`? Test
    on the Debian VM with a dummy secret.
-3. HTTP MCP servers: does Claude Code's `headersHelper` option fit as the
+2. HTTP MCP servers: does Claude Code's `headersHelper` option fit as the
    same wrapper? Verify in the docs before relying on it.
-4. Touch ID instead of a plain dialog: Keychain ACL confirm (as in the
+3. Touch ID instead of a plain dialog: Keychain ACL confirm (as in the
    current prototype) or a LocalAuthentication check in the agent?
-5. Default grant duration (proposal: this launch only, with an opt-in 4 h).
+4. Default grant duration (proposal: this launch only, with an opt-in 4 h).
 
 ## Milestones
 
 1. Mac agent: allow-list, dialog, batching, log. Test with a dummy value.
 2. `keyhole exec` wrapper, tested with one stdio MCP server on the VM.
 3. End-to-end under herdr with two servers; test deny, timeout, resume.
-4. Later: mid-session tools, HTTP MCP, a second transport.
+4. Later: mid-session tools, HTTP MCP, a second transport (Teleport or
+   outbound HTTPS), unattended restarts.
