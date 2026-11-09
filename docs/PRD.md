@@ -87,7 +87,24 @@ MVP; the wrapper replaces it.
   `unknown_name`.
 - R6. Grants with a duration are held in agent memory only and expire.
 
+## Post-MVP requirement
+
+- R9. One socket per host. The Mac agent offers a separate socket per VM
+  (`~/.keyhole/<host>.sock`, mode 0600, listed in `~/.config/keyhole/hosts.json`)
+  and the host label in the dialog comes from the socket, not from the
+  message. Workflow to add a host: `keyhole host add <label>` on the Mac
+  (prints the `RemoteForward` line for `~/.ssh/config`); on the VM, once,
+  `StreamLocalBindUnlink yes` and the wrapper at the same fixed socket path on
+  every host, so `.mcp.json` is identical everywhere; `keyhole ping` to verify;
+  `keyhole host remove <label>` to revoke. The SSH key is the authentication;
+  no per-host secret.
+
+MVP uses one shared socket and no per-host secret, so the host label is
+**claimed by the requester**, not guaranteed.
+
 ## Known limits
+
+- MVP: the host name in the dialog is self-reported (see R9).
 
 - Any process on the VM that can reach the socket can ask. It still needs the
   human to approve, and can only ask for allow-listed names. The dialog shows
